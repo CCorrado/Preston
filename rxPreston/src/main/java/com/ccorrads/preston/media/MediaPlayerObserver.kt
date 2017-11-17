@@ -18,6 +18,7 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import java.io.IOException
 import java.io.Serializable
+import java.lang.IllegalStateException
 import java.math.BigDecimal
 
 /**
@@ -102,17 +103,27 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
     }
 
     private fun performMute() {
-        abandonAudioFocus(focusChangeListener)
-        if (mediaPlayer.isPlaying) {
-            mediaPlayer.setVolume(0f, 0f)
+        try {
+            abandonAudioFocus(focusChangeListener)
+            if (mediaPlayer.isPlaying) {
+                mediaPlayer.setVolume(0f, 0f)
+            }
+            //if the mediaPlayer is not currently set up to mute, log this exception safely.
+        } catch (err: IllegalStateException) {
+            Log.e(TAG, err.message, err)
         }
     }
 
     private fun performUnmute() {
-        if (mediaPlayer.isPlaying) {
-            this.focusChangeListener = createAudioFocusListener(mediaPlayer)
-            mediaPlayer.setVolume(BigDecimal.valueOf(1).toFloat(),
-                    BigDecimal.valueOf(1).toFloat())
+        try {
+            if (mediaPlayer.isPlaying) {
+                this.focusChangeListener = createAudioFocusListener(mediaPlayer)
+                mediaPlayer.setVolume(BigDecimal.valueOf(1).toFloat(),
+                        BigDecimal.valueOf(1).toFloat())
+            }
+            //if the mediaPlayer is not currently set up to unmute, log this exception safely.
+        } catch (err: IllegalStateException) {
+            Log.e(TAG, err.message, err)
         }
     }
 
@@ -144,20 +155,25 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
      * Method to control what happens when ACTION PAUSE is received.
      */
     private fun mediaPause() {
-        abandonAudioFocus(focusChangeListener)
-        statePaused = if (mediaPlayer.isPlaying) {
-            mediaPlayer.pause()
-            true
-        } else {
-            if (statePaused) {
-                mediaPlayer.start()
-                if (stateMuted) {
-                    performMute()
-                } else {
-                    performUnmute()
+        try {
+            abandonAudioFocus(focusChangeListener)
+            statePaused = if (mediaPlayer.isPlaying) {
+                mediaPlayer.pause()
+                true
+            } else {
+                if (statePaused) {
+                    mediaPlayer.start()
+                    if (stateMuted) {
+                        performMute()
+                    } else {
+                        performUnmute()
+                    }
                 }
+                false
             }
-            false
+            //If the media player tries to pause/resume after completion without getting reset.
+        } catch (err: IllegalStateException) {
+            Log.e(TAG, err.message, err)
         }
     }
 
@@ -204,9 +220,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
      */
     private fun releaseMediaPlayer(mp: MediaPlayer?) {
         abandonAudioFocus(null)
-        if (mp != null && mp.isPlaying) {
-            mp.stop()
-        }
+        mp?.stop()
         mp?.reset()
         mp?.release()
     }
