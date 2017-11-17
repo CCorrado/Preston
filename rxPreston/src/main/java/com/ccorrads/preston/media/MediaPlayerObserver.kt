@@ -120,13 +120,15 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
         val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
             when (focusChange) {
                 AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK, AudioManager.AUDIOFOCUS_LOSS,
-                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> if (!stateMuted) {
-                    mediaPlayer?.setVolume(BigDecimal.valueOf(AUDIO_VOL_LOSS_LEVEL).toFloat(),
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> if (mediaPlayer != null
+                        && mediaPlayer.isPlaying && !stateMuted) {
+                    mediaPlayer.setVolume(BigDecimal.valueOf(AUDIO_VOL_LOSS_LEVEL).toFloat(),
                             BigDecimal.valueOf(AUDIO_VOL_LOSS_LEVEL).toFloat())
                 }
                 AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, AudioManager.AUDIOFOCUS_GAIN,
-                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT -> if (!stateMuted) {
-                    mediaPlayer?.setVolume(BigDecimal.valueOf(1).toFloat(),
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT -> if (mediaPlayer != null
+                        && mediaPlayer.isPlaying && !stateMuted) {
+                    mediaPlayer.setVolume(BigDecimal.valueOf(1).toFloat(),
                             BigDecimal.valueOf(1).toFloat())
                 }
             }
