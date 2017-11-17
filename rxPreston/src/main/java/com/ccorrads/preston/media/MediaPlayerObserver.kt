@@ -64,7 +64,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
         when (mediaPlayerState.mediaPlayerState) {
             ON_COMPLETED -> {
-                abandonAudioFocus(focusChangeListener)
+                abandonAudioFocus(null)
                 if (mediaPlayer.isPlaying) {
                     mediaPlayer.stop()
                 }
@@ -203,7 +203,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
      * @param mp -- media player to nullify.
      */
     private fun releaseMediaPlayer(mp: MediaPlayer?) {
-        abandonAudioFocus(focusChangeListener)
+        abandonAudioFocus(null)
         if (mp != null && mp.isPlaying) {
             mp.stop()
         }
