@@ -2,10 +2,13 @@
 Preston is a helpful wrapper around Android's MediaPlayer using RxJava.
 
 ### Why Preston?
-Android's Media Player is a pain point for a lot of Android Developers. There is a lot to consider.
+Android's Media Player is a pain point for a lot of Android Developers. There is a lot to consider. The state diagram of Media Player is tough to follow and hard to handle gracefully. https://developer.android.com/reference/android/media/MediaPlayer.html
+
 * `MediaPlayerObserver` Takes care of the Media Player "state" for you by allowing you to subscribe to an emitting Observable from `MediaPlaybackService`.
 * Audio Focus is handled by the Observer which allows you to not worry about multiple audio streams.
-* 
+* Using Kotlin's type system, we can more easily handle, abstract away, and visualize in code what state Media Player is in when we need it to Play, Pause, Stop, or Toggle Mute.
+
+## Developers looking for a lightweight Media Player that don't need an attached seekbar, video capabilities, or other features commonly found in Media Player APIs like ExoPlayer, Preston is meant to solve this problem in a clean way.
 
 ### API
 The API is simple. There are a few different ways you can play back, pause (or resume), stop, mute (or unmute) an audio stream.
@@ -71,3 +74,6 @@ The API is simple. There are a few different ways you can play back, pause (or r
                 .subscribe(mediaPlayerObserver)
     }
 ```
+
+## Author
+* Chris Corrado (ccorrads@gmail.com)
