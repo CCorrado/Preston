@@ -1,12 +1,12 @@
 package com.ccorrads.preston
 
-import android.content.Context
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.ccorrads.preston.media.MediaPlaybackService
 import com.ccorrads.preston.media.MediaPlayerObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.activity_sample.*
 
 class SampleActivity : AppCompatActivity() {
 
@@ -15,10 +15,26 @@ class SampleActivity : AppCompatActivity() {
 
     private val audioPath = "sample_audio/might_be_coffee.mp3"
 
+    private var muted = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sample)
-        playMedia(false)
+
+        action_stop.setOnClickListener { stopMedia() }
+
+        action_replay.setOnClickListener { playMedia(muted) }
+
+        play_pause_toggle.setOnClickListener { pauseOrResumeMedia(muted) }
+
+        mute_toggle.setOnCheckedChangeListener { _, checked ->
+            muted = checked
+            if (muted) {
+                muteCurrentMP()
+            } else {
+                unmuteCurrentMP()
+            }
+        }
     }
 
     override fun onPause() {
@@ -34,7 +50,7 @@ class SampleActivity : AppCompatActivity() {
     /**
      * Play a Media Player with some assets path.
      */
-    fun playMedia(muted: Boolean) {
+    private fun playMedia(muted: Boolean) {
         mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_PLAY, muted)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -44,7 +60,7 @@ class SampleActivity : AppCompatActivity() {
     /**
      * Pause or Resume a running Media Player
      */
-    fun pauseOrResumeMedia(muted: Boolean) {
+    private fun pauseOrResumeMedia(muted: Boolean) {
         mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_PAUSE, muted)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -54,7 +70,7 @@ class SampleActivity : AppCompatActivity() {
     /**
      * Stop a Media Player.
      */
-    fun stopMedia() {
+    private fun stopMedia() {
         mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_STOP, false)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -64,7 +80,7 @@ class SampleActivity : AppCompatActivity() {
     /**
      * Muting a running Media Player without playing or pausing.
      */
-    fun muteCurrentMP() {
+    private fun muteCurrentMP() {
         mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_MUTE, true)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -74,7 +90,7 @@ class SampleActivity : AppCompatActivity() {
     /**
      * Unmuting a running Media Player without playing or pausing.
      */
-    fun unmuteCurrentMP(context: Context) {
+    private fun unmuteCurrentMP() {
         mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_UNMUTE, false)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
