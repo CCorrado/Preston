@@ -67,7 +67,7 @@ The API is simple. There are a few different ways you can play back, pause (or r
     /**
      * Unmuting a running Media Player without playing or pausing.
      */
-    fun unmuteCurrentMP(context: Context) {
+    fun unmuteCurrentMP() {
         mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_UNMUTE, false)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
