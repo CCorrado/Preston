@@ -8,9 +8,9 @@ Android's Media Player is a pain point for a lot of Android Developers. There is
 * Audio Focus is handled by the Observer which allows you to not worry about multiple audio streams.
 * Using Kotlin's type system, we can more easily handle, abstract away, and visualize in code what state Media Player is in when we need it to Play, Pause, Stop, or Toggle Mute.
 
-## Developers looking for a lightweight Media Player that don't need an attached seekbar, video capabilities, or other features commonly found in Media Player APIs like ExoPlayer, Preston is meant to solve this problem in a clean way.
+#### Developers looking for a lightweight Media Player that don't need an attached seekbar, video capabilities, or other features commonly found in Media Player APIs like ExoPlayer, Preston is meant to solve this problem in a clean way.
 
-### API
+## API
 The API is simple. There are a few different ways you can play back, pause (or resume), stop, mute (or unmute) an audio stream.
 
 * Playing using Preston
