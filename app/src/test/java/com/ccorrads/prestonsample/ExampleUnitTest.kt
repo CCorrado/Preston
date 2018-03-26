@@ -1,4 +1,4 @@
-package com.ccorrads.preston
+package com.ccorrads.prestonsample
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

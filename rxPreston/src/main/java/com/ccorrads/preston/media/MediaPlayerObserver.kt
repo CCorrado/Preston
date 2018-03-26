@@ -26,9 +26,12 @@ import java.math.BigDecimal
  */
 class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
-    @Transient private var mediaPlayer: MediaPlayer? = null
-    @Transient private lateinit var appContext: Context
-    @Transient private var focusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
+    @Transient
+    private var mediaPlayer: MediaPlayer? = null
+    @Transient
+    private lateinit var appContext: Context
+    @Transient
+    private var focusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
 
     private var stateMuted: Boolean = false
 
@@ -241,12 +244,12 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
         private val TAG = MediaPlayerObserver::class.java.simpleName
 
-        val ON_PREPARED = "ON_PREPARED"
-        private val ON_ERROR = "ON_ERROR"
-        private val ON_COMPLETED = "ON_COMPLETED"
-        private val ON_RESUME = "ON_RESUME"
+        const val ON_PREPARED = "ON_PREPARED"
+        private const val ON_ERROR = "ON_ERROR"
+        private const val ON_COMPLETED = "ON_COMPLETED"
+        private const val ON_RESUME = "ON_RESUME"
 
-        private val AUDIO_VOL_LOSS_LEVEL = 0.2
+        private const val AUDIO_VOL_LOSS_LEVEL = 0.2
 
         private var statePaused: Boolean = false
     }
