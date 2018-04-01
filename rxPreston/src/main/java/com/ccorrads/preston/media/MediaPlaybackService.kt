@@ -7,6 +7,10 @@ import com.ccorrads.preston.models.MediaPlayerState
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 
+/**
+ * This Service is meant to route and delegate the Media Player callbacks to the managed
+ * Observable/Emitter
+ */
 class MediaPlaybackService : MediaPlayer.OnPreparedListener,
         MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
@@ -27,6 +31,14 @@ class MediaPlaybackService : MediaPlayer.OnPreparedListener,
     @VisibleForTesting
     lateinit var stateAction: StateAction
 
+    /**
+     * Method to create an initialized instance of this service.
+     *
+     * @param appContext -- Context to pass into the state for the Media Player
+     * @param source     -- the Media Source (URI) passed in.
+     * @param action     -- {@link StateAction} enum item to delegate to the media player.
+     * @param muted      -- whether or not the audio should "play" muted
+     */
     fun create(appContext: Context, source: String, action: StateAction, muted: Boolean): MediaPlaybackService {
         mediaSource = source
         isMuted = muted
@@ -57,13 +69,6 @@ class MediaPlaybackService : MediaPlayer.OnPreparedListener,
         return false
     }
 
-    /**
-     * Configure the MP State Model with data for the Observer.
-     *
-     * @param intentAction -- the Service intent action passed in from the activity.
-     * @param mediaSource  -- the Media Source (URI) passed in from the activity.
-     * @return -- a Configured MediaPlayerState object.
-     */
     private fun configureMediaPlayerState(intentAction: StateAction, mediaSource: String,
                                           isMuted: Boolean): MediaPlayerState {
         return MediaPlayerState(context, intentAction, mediaSource, this, isMuted)

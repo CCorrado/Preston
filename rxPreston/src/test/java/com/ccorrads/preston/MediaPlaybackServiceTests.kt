@@ -42,6 +42,9 @@ class MediaPlaybackServiceTests : TestCase() {
     @Mock
     private var audioManager: AudioManager? = null
 
+    /**
+     * Set up each test.
+     */
     @Before
     fun setUpTests() {
         MockitoAnnotations.initMocks(this)
@@ -59,6 +62,9 @@ class MediaPlaybackServiceTests : TestCase() {
         Assert.assertNotNull(observer)
     }
 
+    /**
+     * Assert that the observable is valid on the subscription.
+     */
     @Test
     fun testPlaybackServiceSubscription() {
         //Sanity Checks
@@ -81,22 +87,29 @@ class MediaPlaybackServiceTests : TestCase() {
         })
     }
 
+    /**
+     * Assert that the MP is not null if you play.
+     */
     @Test
     fun testPlay() {
         setStateToPlaying()
         Assert.assertNotNull(observer.mediaPlayer)
     }
 
+    /**
+     * Assert that the MP is null if you pause without playing.
+     */
     @Test
     fun testPauseNotPlaying() {
-        // Assert that the MP is null if you pause without playing.
         setStateToPaused()
         Assert.assertNull(observer.mediaPlayer)
     }
 
+    /**
+     * Assert that the MP is not null if you pause after playing.
+     */
     @Test
     fun testPauseWhenPlaying() {
-        // Assert that the MP is not null if you pause after playing.
         setStateToPlaying()
         Assert.assertNotNull(observer.mediaPlayer)
 
@@ -104,17 +117,21 @@ class MediaPlaybackServiceTests : TestCase() {
         Assert.assertNotNull(observer.mediaPlayer)
     }
 
+    /**
+     * Assert that the media player is null when muting
+     */
     @Test
     fun testMuteWhenNotPlaying() {
-        // Assert that the media player is null when muting
         setStateToMuted()
         Assert.assertTrue(observer.stateMuted)
         Assert.assertNull(observer.mediaPlayer)
     }
 
+    /**
+     * Assert the media player is never null when muting
+     */
     @Test
     fun testMuteWhenPlaying() {
-        // Assert the media player is never null when muting
         setStateToPlaying()
         Assert.assertFalse(observer.stateMuted)
         Assert.assertNotNull(observer.mediaPlayer)
@@ -124,9 +141,11 @@ class MediaPlaybackServiceTests : TestCase() {
         Assert.assertNotNull(observer.mediaPlayer)
     }
 
+    /**
+     * Assert the media player is never null when muting/unmuting
+     */
     @Test
     fun testMuteThenUnmuteWhenPlaying() {
-        // Assert the media player is never null when muting/unmuting
         setStateToPlaying()
         Assert.assertNotNull(observer.mediaPlayer)
 
@@ -137,27 +156,28 @@ class MediaPlaybackServiceTests : TestCase() {
         Assert.assertNotNull(observer.mediaPlayer)
     }
 
+    /**
+     * Assert that the media player is null before and after this call.
+     */
     @Test
     fun testStopWhenNotPlaying() {
-        // Assert that the media player is null before and after this call.
         Assert.assertNull(observer.mediaPlayer)
         setStateToStopped()
         Assert.assertNull(observer.mediaPlayer)
     }
 
+    /**
+     * Assert that we've stopped the media player and set it to null.
+     */
     @Test
     fun testStopWhenPlaying() {
         setStateToPlaying()
         Assert.assertNotNull(observer.mediaPlayer)
 
         setStateToStopped()
-        // Assert that we've stopped the media player and set it to null.
         Assert.assertNull(observer.mediaPlayer)
     }
 
-    /**
-     * Helper method to init a playing state.
-     */
     private fun setStateToPlaying() {
         val playService = MediaPlaybackService().create(context, sourcePath,
                 MediaPlaybackService.StateAction.ACTION_PLAY, false)
@@ -167,9 +187,6 @@ class MediaPlaybackServiceTests : TestCase() {
         observer.onNext(state)
     }
 
-    /**
-     * Helper method to init a paused state.
-     */
     private fun setStateToPaused() {
         val pauseService = MediaPlaybackService().create(context, sourcePath,
                 MediaPlaybackService.StateAction.ACTION_PAUSE_OR_RESUME, false)
@@ -179,9 +196,6 @@ class MediaPlaybackServiceTests : TestCase() {
         observer.onNext(state)
     }
 
-    /**
-     * Helper method to init a stopped state.
-     */
     private fun setStateToStopped() {
         val stopService = MediaPlaybackService().create(context, sourcePath,
                 MediaPlaybackService.StateAction.ACTION_STOP, false)
@@ -191,9 +205,6 @@ class MediaPlaybackServiceTests : TestCase() {
         observer.onNext(state)
     }
 
-    /**
-     * Helper method to init a muted state.
-     */
     private fun setStateToMuted() {
         val muteService = MediaPlaybackService().create(context, sourcePath,
                 MediaPlaybackService.StateAction.ACTION_MUTE, false)
@@ -203,9 +214,6 @@ class MediaPlaybackServiceTests : TestCase() {
         observer.onNext(state)
     }
 
-    /**
-     * Helper method to init an unmuted state.
-     */
     private fun setStateToUnmuted() {
         val unmuteService = MediaPlaybackService().create(context, sourcePath,
                 MediaPlaybackService.StateAction.ACTION_UNMUTE, false)
