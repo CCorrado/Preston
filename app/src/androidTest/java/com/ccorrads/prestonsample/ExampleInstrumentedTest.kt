@@ -1,4 +1,4 @@
-package com.ccorrads.preston
+package com.ccorrads.prestonsample
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4

@@ -1,4 +1,4 @@
-package com.ccorrads.preston
+package com.ccorrads.prestonsample
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -51,7 +51,9 @@ class SampleActivity : AppCompatActivity() {
      * Play a Media Player with some assets path.
      */
     private fun playMedia(muted: Boolean) {
-        mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_PLAY, muted)
+        mediaService.create(applicationContext, audioPath,
+                MediaPlaybackService.StateAction.ACTION_PLAY, muted)
+                .mediaPlayerObservable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(mediaPlayerObserver)
@@ -61,7 +63,9 @@ class SampleActivity : AppCompatActivity() {
      * Pause or Resume a running Media Player
      */
     private fun pauseOrResumeMedia(muted: Boolean) {
-        mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_PAUSE, muted)
+        mediaService.create(applicationContext, audioPath,
+                MediaPlaybackService.StateAction.ACTION_PAUSE_OR_RESUME, muted)
+                .mediaPlayerObservable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(mediaPlayerObserver)
@@ -71,7 +75,9 @@ class SampleActivity : AppCompatActivity() {
      * Stop a Media Player.
      */
     private fun stopMedia() {
-        mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_STOP, false)
+        mediaService.create(applicationContext, audioPath,
+                MediaPlaybackService.StateAction.ACTION_STOP, false)
+                .mediaPlayerObservable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(mediaPlayerObserver)
@@ -81,7 +87,9 @@ class SampleActivity : AppCompatActivity() {
      * Muting a running Media Player without playing or pausing.
      */
     private fun muteCurrentMP() {
-        mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_MUTE, true)
+        mediaService.create(applicationContext, audioPath,
+                MediaPlaybackService.StateAction.ACTION_MUTE, true)
+                .mediaPlayerObservable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(mediaPlayerObserver)
@@ -91,7 +99,9 @@ class SampleActivity : AppCompatActivity() {
      * Unmuting a running Media Player without playing or pausing.
      */
     private fun unmuteCurrentMP() {
-        mediaService.create(applicationContext, audioPath, MediaPlaybackService.ACTION_UNMUTE, false)
+        mediaService.create(applicationContext, audioPath,
+                MediaPlaybackService.StateAction.ACTION_UNMUTE, false)
+                .mediaPlayerObservable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(mediaPlayerObserver)

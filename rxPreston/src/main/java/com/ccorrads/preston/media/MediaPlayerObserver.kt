@@ -2,17 +2,16 @@ package com.ccorrads.preston.media
 
 import android.content.Context
 import android.content.Context.AUDIO_SERVICE
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
 import android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
 import android.media.MediaPlayer
+import android.os.Build
+import android.support.annotation.VisibleForTesting
 import android.text.TextUtils
 import android.util.Log
-import com.ccorrads.preston.media.MediaPlaybackService.Companion.ACTION_MUTE
-import com.ccorrads.preston.media.MediaPlaybackService.Companion.ACTION_PAUSE
-import com.ccorrads.preston.media.MediaPlaybackService.Companion.ACTION_PLAY
-import com.ccorrads.preston.media.MediaPlaybackService.Companion.ACTION_STOP
-import com.ccorrads.preston.media.MediaPlaybackService.Companion.ACTION_UNMUTE
 import com.ccorrads.preston.models.MediaPlayerState
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
@@ -26,11 +25,17 @@ import java.math.BigDecimal
  */
 class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
-    @Transient private var mediaPlayer: MediaPlayer? = null
-    @Transient private lateinit var appContext: Context
-    @Transient private var focusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
+    @Transient
+    @VisibleForTesting
+    var mediaPlayer: MediaPlayer? = null
 
-    private var stateMuted: Boolean = false
+    @Transient
+    private lateinit var appContext: Context
+    @Transient
+    private var focusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
+
+    @VisibleForTesting
+    var stateMuted: Boolean = false
 
     override fun onSubscribe(disposable: Disposable) {
         Log.d(TAG, "MP Observer Subscribed")
@@ -64,15 +69,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
         this.stateMuted = mediaPlayerState.isMuted
 
         when (mediaPlayerState.mediaPlayerState) {
-            ON_COMPLETED -> {
-                abandonAudioFocus(null)
-                if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                    mediaPlayer!!.stop()
-                }
-                mediaPlayer?.reset()
-            }
-            ON_ERROR -> releaseMediaPlayer(mediaPlayer)
-            ON_PREPARED -> {
+            MediaPlaybackService.StateAction.ON_PREPARED -> {
                 if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
                     mediaPlayer!!.stop()
                     mediaPlayer!!.reset()
@@ -86,20 +83,15 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
                     performUnmute()
                 }
             }
-            ACTION_PLAY -> {
+            MediaPlaybackService.StateAction.ACTION_PLAY -> {
                 mediaPlay(mediaSource, mediaPlayerState.mediaPlaybackService)
             }
-            ACTION_PAUSE -> mediaPause()
-            ON_RESUME -> if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                abandonAudioFocus(focusChangeListener)
-                statePaused = true
-                mediaPlayer?.pause()
-            }
-            ACTION_STOP -> {
+            MediaPlaybackService.StateAction.ACTION_PAUSE_OR_RESUME -> mediaPause()
+            MediaPlaybackService.StateAction.ACTION_STOP -> {
                 releaseMediaPlayer(mediaPlayer)
             }
-            ACTION_MUTE -> performMute()
-            ACTION_UNMUTE -> performUnmute()
+            MediaPlaybackService.StateAction.ACTION_MUTE -> performMute()
+            MediaPlaybackService.StateAction.ACTION_UNMUTE -> performUnmute()
         }
     }
 
@@ -147,8 +139,24 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
         }
         abandonAudioFocus(focusChangeListener)
         val am = appContext.getSystemService(AUDIO_SERVICE) as AudioManager
-        am.requestAudioFocus(focusChangeListener, AudioManager.STREAM_MUSIC,
-                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+
+        //Android O and above Audio Focus.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setLegacyStreamType(AudioManager.STREAM_MUSIC)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
+
+            val focusRequestBuilder = AudioFocusRequest.Builder(AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                    .setOnAudioFocusChangeListener(focusChangeListener)
+                    .setAudioAttributes(audioAttributes)
+
+            am.requestAudioFocus(focusRequestBuilder.build())
+
+        } else {
+            am.requestAudioFocus(focusChangeListener, AudioManager.STREAM_MUSIC,
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+        }
         return focusChangeListener
     }
 
@@ -193,7 +201,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
             mediaPlayer = MediaPlayer()
         }
         try {
-            appContext.resources.assets.openFd(mediaSource).use({ assetFileDescriptor ->
+            appContext.assets.openFd(mediaSource).use({ assetFileDescriptor ->
 
                 mediaPlayer?.setOnPreparedListener(mediaPlaybackService)
                 mediaPlayer?.setOnErrorListener(mediaPlaybackService)
@@ -241,12 +249,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
         private val TAG = MediaPlayerObserver::class.java.simpleName
 
-        val ON_PREPARED = "ON_PREPARED"
-        private val ON_ERROR = "ON_ERROR"
-        private val ON_COMPLETED = "ON_COMPLETED"
-        private val ON_RESUME = "ON_RESUME"
-
-        private val AUDIO_VOL_LOSS_LEVEL = 0.2
+        private const val AUDIO_VOL_LOSS_LEVEL = 0.2
 
         private var statePaused: Boolean = false
     }
