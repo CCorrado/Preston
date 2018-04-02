@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="source_paths">
+        <item>sample_audio/might_be_coffee.mp3</item>
+        <item>sample_audio/3_1_startup.mp3</item>
+        <item>sample_audio/7_startup.mp3</item>
+        <item>sample_audio/95_startup.mp3</item>
+        <item>sample_audio/98_shutdown.mp3</item>
+        <item>sample_audio/98_startup.mp3</item>
+        <item>sample_audio/2000_shutdown.mp3</item>
+        <item>sample_audio/2000_startup.mp3</item>
+        <item>sample_audio/me_shutdown.mp3</item>
+        <item>sample_audio/me_startup.mp3</item>
+        <item>sample_audio/nt_startup.mp3</item>
+        <item>sample_audio/vista_startup.mp3</item>
+        <item>sample_audio/xp_logoff.mp3</item>
+        <item>sample_audio/xp_logon.mp3</item>
+        <item>sample_audio/xp_shutdown.mp3</item>
+        <item>sample_audio/xp_startup.mp3</item>
+    </string-array>
+
+    <string-array name="source_titles">
+        <item>Deadmau5 - There Might Be Coffee</item>
+        <item>3.1 Startup</item>
+        <item>7 Startup</item>
+        <item>95 Startup</item>
+        <item>98 Shutdown</item>
+        <item>98 Startup</item>
+        <item>2000 Shutdown</item>
+        <item>2000 Startup</item>
+        <item>ME Shutdown</item>
+        <item>ME Startup</item>
+        <item>NT startup</item>
+        <item>Vista Startup</item>
+        <item>XP Logoff</item>
+        <item>XP Logon</item>
+        <item>XP Shutdown</item>
+        <item>XP Startup</item>
+    </string-array>
+</resources>
