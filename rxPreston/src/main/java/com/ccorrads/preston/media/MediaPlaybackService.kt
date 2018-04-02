@@ -74,6 +74,9 @@ class MediaPlaybackService : MediaPlayer.OnPreparedListener,
         return MediaPlayerState(context, intentAction, mediaSource, this, isMuted)
     }
 
+    /**
+     * Enum class to define the handled States accepted by the MediaPlayerObserver
+     */
     enum class StateAction {
         ACTION_PLAY,
         ACTION_PAUSE_OR_RESUME,
