@@ -10,8 +10,8 @@ import com.ccorrads.preston.media.MediaPlayerObserver
 import com.ccorrads.preston.models.MediaPlayerState
 import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
-import junit.framework.Assert
 import junit.framework.TestCase
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
