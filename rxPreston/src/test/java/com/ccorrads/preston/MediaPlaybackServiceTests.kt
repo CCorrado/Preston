@@ -24,6 +24,7 @@ import org.mockito.MockitoAnnotations
 
 
 @RunWith(JUnit4::class)
+
 class MediaPlaybackServiceTests : TestCase() {
 
     private lateinit var observer: MediaPlayerObserver
