@@ -19,7 +19,6 @@ import io.reactivex.disposables.Disposable
 import java.io.IOException
 import java.io.Serializable
 import java.lang.IllegalStateException
-import java.math.BigDecimal
 
 /**
  * Observer to subscribe to when needing to play a media file.
@@ -92,9 +91,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
                 mediaPlay(mediaSource, mediaPlayerState.mediaPlaybackService)
             }
             MediaPlaybackService.StateAction.ACTION_PAUSE_OR_RESUME -> mediaPause()
-            MediaPlaybackService.StateAction.ACTION_STOP -> {
-                releaseMediaPlayer(mediaPlayer)
-            }
+            MediaPlaybackService.StateAction.ACTION_STOP -> releaseMediaPlayer(mediaPlayer)
             MediaPlaybackService.StateAction.ACTION_MUTE -> performMute()
             MediaPlaybackService.StateAction.ACTION_UNMUTE -> performUnmute()
         }
@@ -103,7 +100,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
     private fun performMute() {
         try {
             if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                abandonAudioFocus(focusChangeListener)
+                abandonAudioFocus(focusChangeListener, focusRequest)
                 mediaPlayer?.setVolume(0f, 0f)
             }
             //if the mediaPlayer is not currently set up to mute, log this exception safely.
@@ -113,11 +110,14 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
     }
 
     private fun performUnmute() {
+        val am = appContext.getSystemService(AUDIO_SERVICE) as? AudioManager
         try {
             if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
                 this.focusChangeListener = createAudioFocusListener()
-                mediaPlayer?.setVolume(BigDecimal.valueOf(1).toFloat(),
-                        BigDecimal.valueOf(1).toFloat())
+                val currentVol = am?.getStreamVolume(AudioManager.STREAM_MUSIC)
+                val leftVol = currentVol ?: 1
+                val rightVol = currentVol ?: 1
+                mediaPlayer?.setVolume(leftVol.toFloat(), rightVol.toFloat())
             }
             //if the mediaPlayer is not currently set up to unmute, log this exception safely.
         } catch (err: IllegalStateException) {
@@ -132,8 +132,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
                 AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK, AudioManager.AUDIOFOCUS_LOSS,
                 AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> if (mediaPlayer != null
                         && mediaPlayer!!.isPlaying && !stateMuted) {
-                    mediaPlayer?.setVolume(BigDecimal.valueOf(AUDIO_VOL_LOSS_LEVEL).toFloat(),
-                            BigDecimal.valueOf(AUDIO_VOL_LOSS_LEVEL).toFloat())
+                    mediaPlayer?.setVolume(0.2F, 0.2F)
                 }
                 AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, AudioManager.AUDIOFOCUS_GAIN,
                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT -> if (mediaPlayer != null
@@ -145,10 +144,11 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
                 }
             }
         }
-        abandonAudioFocus(focusChangeListener)
+        abandonAudioFocus(focusChangeListener, focusRequest)
         //Android O and above Audio Focus.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            am?.requestAudioFocus(getFocusRequest(focusChangeListener))
+            focusRequest = getFocusRequest(focusChangeListener)
+            am?.requestAudioFocus(focusRequest)
         } else {
             am?.requestAudioFocus(focusChangeListener, AudioManager.STREAM_MUSIC,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
@@ -177,7 +177,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
     private fun mediaPause() {
         try {
             if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                abandonAudioFocus(focusChangeListener)
+                abandonAudioFocus(focusChangeListener, focusRequest)
             }
             statePaused = if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
                 mediaPlayer?.pause()
@@ -236,7 +236,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
         try {
             mediaPlayer?.prepareAsync()
-        } catch (error: Exception) {
+        } catch (error: IllegalStateException) {
             //catch possible "setDataSource" errors if the file is not found on the device.
             Log.e(TAG, error.message, error)
         }
@@ -248,18 +248,21 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
      * @param mp -- media player to nullify.
      */
     private fun releaseMediaPlayer(mp: MediaPlayer?) {
-        abandonAudioFocus(null)
+        abandonAudioFocus(null, null)
         mp?.stop()
         mp?.reset()
         mp?.release()
         mediaPlayer = null
     }
 
-    private fun abandonAudioFocus(focusChangeListener: AudioManager.OnAudioFocusChangeListener?) {
+    private fun abandonAudioFocus(focusChangeListener: AudioManager.OnAudioFocusChangeListener?,
+                                  focusRequest: AudioFocusRequest?) {
         val am = appContext.getSystemService(AUDIO_SERVICE) as AudioManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            am.abandonAudioFocusRequest(focusRequest)
+            if (focusRequest != null) {
+                am.abandonAudioFocusRequest(focusRequest)
+            }
         } else {
             am.abandonAudioFocus(focusChangeListener)
         }
