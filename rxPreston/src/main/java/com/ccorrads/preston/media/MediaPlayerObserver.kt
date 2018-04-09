@@ -1,5 +1,6 @@
 package com.ccorrads.preston.media
 
+import android.annotation.TargetApi
 import android.content.Context
 import android.content.Context.AUDIO_SERVICE
 import android.media.AudioAttributes
@@ -31,8 +32,12 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
     @Transient
     private lateinit var appContext: Context
+
     @Transient
     private var focusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
+
+    @Transient
+    private var focusRequest: AudioFocusRequest? = null
 
     @VisibleForTesting
     var stateMuted: Boolean = false
@@ -121,43 +126,49 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
     }
 
     private fun createAudioFocusListener(): AudioManager.OnAudioFocusChangeListener {
+        val am = appContext.getSystemService(AUDIO_SERVICE) as? AudioManager
         val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
             when (focusChange) {
                 AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK, AudioManager.AUDIOFOCUS_LOSS,
                 AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> if (mediaPlayer != null
                         && mediaPlayer!!.isPlaying && !stateMuted) {
-                    mediaPlayer!!.setVolume(BigDecimal.valueOf(AUDIO_VOL_LOSS_LEVEL).toFloat(),
+                    mediaPlayer?.setVolume(BigDecimal.valueOf(AUDIO_VOL_LOSS_LEVEL).toFloat(),
                             BigDecimal.valueOf(AUDIO_VOL_LOSS_LEVEL).toFloat())
                 }
                 AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, AudioManager.AUDIOFOCUS_GAIN,
                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT -> if (mediaPlayer != null
                         && mediaPlayer!!.isPlaying && !stateMuted) {
-                    mediaPlayer!!.setVolume(BigDecimal.valueOf(1).toFloat(),
-                            BigDecimal.valueOf(1).toFloat())
+                    val currentVol = am?.getStreamVolume(AudioManager.STREAM_MUSIC)
+                    val leftVol = currentVol ?: 1
+                    val rightVol = currentVol ?: 1
+                    mediaPlayer?.setVolume(leftVol.toFloat(), rightVol.toFloat())
                 }
             }
         }
         abandonAudioFocus(focusChangeListener)
-        val am = appContext.getSystemService(AUDIO_SERVICE) as AudioManager
-
         //Android O and above Audio Focus.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val audioAttributes = AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setLegacyStreamType(AudioManager.STREAM_MUSIC)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
-
-            val focusRequestBuilder = AudioFocusRequest.Builder(AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-                    .setOnAudioFocusChangeListener(focusChangeListener)
-                    .setAudioAttributes(audioAttributes)
-
-            am.requestAudioFocus(focusRequestBuilder.build())
-
+            am?.requestAudioFocus(getFocusRequest(focusChangeListener))
         } else {
-            am.requestAudioFocus(focusChangeListener, AudioManager.STREAM_MUSIC,
+            am?.requestAudioFocus(focusChangeListener, AudioManager.STREAM_MUSIC,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
         }
         return focusChangeListener
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    private fun getFocusRequest(focusChangeListener: AudioManager.OnAudioFocusChangeListener?): AudioFocusRequest {
+        return AudioFocusRequest.Builder(AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                .setOnAudioFocusChangeListener(focusChangeListener)
+                .setAudioAttributes(getAudioAttributes()).build()
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun getAudioAttributes(): AudioAttributes {
+        return AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setLegacyStreamType(AudioManager.STREAM_MUSIC)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
     }
 
     /**
@@ -213,7 +224,11 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
                 mediaPlayer?.setDataSource(assetFileDescriptor.fileDescriptor,
                         assetFileDescriptor.startOffset,
                         assetFileDescriptor.length)
-                mediaPlayer?.setAudioStreamType(AudioManager.STREAM_MUSIC)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    mediaPlayer?.setAudioAttributes(getAudioAttributes())
+                } else {
+                    mediaPlayer?.setAudioStreamType(AudioManager.STREAM_MUSIC)
+                }
             })
         } catch (e: IOException) {
             Log.e(TAG, e.message, e)
@@ -242,7 +257,12 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
     private fun abandonAudioFocus(focusChangeListener: AudioManager.OnAudioFocusChangeListener?) {
         val am = appContext.getSystemService(AUDIO_SERVICE) as AudioManager
-        am.abandonAudioFocus(focusChangeListener)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            am.abandonAudioFocusRequest(focusRequest)
+        } else {
+            am.abandonAudioFocus(focusChangeListener)
+        }
     }
 
     companion object {
