@@ -18,7 +18,6 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import java.io.IOException
 import java.io.Serializable
-import java.lang.IllegalStateException
 
 /**
  * Observer to subscribe to when needing to play a media file.
@@ -74,17 +73,20 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
         when (mediaPlayerState.mediaPlayerState) {
             MediaPlaybackService.StateAction.ON_PREPARED -> {
-                if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                    mediaPlayer!!.stop()
-                    mediaPlayer!!.reset()
-                    return
-                }
-                this.focusChangeListener = createAudioFocusListener()
-                mediaPlayer?.start()
-                if (stateMuted) {
-                    performMute()
-                } else {
-                    performUnmute()
+                mediaPlayer?.let { mp ->
+
+                    if (mp.isPlaying) {
+                        mp.stop()
+                        mp.reset()
+                        return
+                    }
+                    this.focusChangeListener = createAudioFocusListener()
+                    mediaPlayer?.start()
+                    if (stateMuted) {
+                        performMute()
+                    } else {
+                        performUnmute()
+                    }
                 }
             }
             MediaPlaybackService.StateAction.ACTION_PLAY -> {
@@ -99,9 +101,11 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
     private fun performMute() {
         try {
-            if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                abandonAudioFocus(focusChangeListener, focusRequest)
-                mediaPlayer?.setVolume(0f, 0f)
+            mediaPlayer?.let { mp ->
+                if (mp.isPlaying) {
+                    abandonAudioFocus(focusChangeListener, focusRequest)
+                    mp.setVolume(0f, 0f)
+                }
             }
             //if the mediaPlayer is not currently set up to mute, log this exception safely.
         } catch (err: IllegalStateException) {
@@ -112,12 +116,14 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
     private fun performUnmute() {
         val am = appContext.getSystemService(AUDIO_SERVICE) as? AudioManager
         try {
-            if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                this.focusChangeListener = createAudioFocusListener()
-                val currentVol = am?.getStreamVolume(AudioManager.STREAM_MUSIC)
-                val leftVol = currentVol ?: 1
-                val rightVol = currentVol ?: 1
-                mediaPlayer?.setVolume(leftVol.toFloat(), rightVol.toFloat())
+            mediaPlayer?.let { mp ->
+                if (mp.isPlaying) {
+                    this.focusChangeListener = createAudioFocusListener()
+                    val currentVol = am?.getStreamVolume(AudioManager.STREAM_MUSIC)
+                    val leftVol = currentVol ?: 1
+                    val rightVol = currentVol ?: 1
+                    mp.setVolume(leftVol.toFloat(), rightVol.toFloat())
+                }
             }
             //if the mediaPlayer is not currently set up to unmute, log this exception safely.
         } catch (err: IllegalStateException) {
@@ -130,18 +136,22 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
         val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
             when (focusChange) {
                 AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK, AudioManager.AUDIOFOCUS_LOSS,
-                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> if (mediaPlayer != null
-                        && mediaPlayer!!.isPlaying && !stateMuted) {
-                    mediaPlayer?.setVolume(0.2F, 0.2F)
-                }
-                AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, AudioManager.AUDIOFOCUS_GAIN,
-                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT -> if (mediaPlayer != null
-                        && mediaPlayer!!.isPlaying && !stateMuted) {
-                    val currentVol = am?.getStreamVolume(AudioManager.STREAM_MUSIC)
-                    val leftVol = currentVol ?: 1
-                    val rightVol = currentVol ?: 1
-                    mediaPlayer?.setVolume(leftVol.toFloat(), rightVol.toFloat())
-                }
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ->
+                    mediaPlayer?.let { mp ->
+                        if (mp.isPlaying && !stateMuted) {
+                            mp.setVolume(0.2F, 0.2F)
+                        }
+                    }
+
+                AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, AudioManager.AUDIOFOCUS_GAIN, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT ->
+                    mediaPlayer?.let { mp ->
+                        if (mp.isPlaying && !stateMuted) {
+                            val currentVol = am?.getStreamVolume(AudioManager.STREAM_MUSIC)
+                            val leftVol = currentVol?.toFloat() ?: AUDIO_VOL_LOSS_LEVEL
+                            val rightVol = currentVol?.toFloat() ?: AUDIO_VOL_LOSS_LEVEL
+                            mp.setVolume(leftVol, rightVol)
+                        }
+                    }
             }
         }
         abandonAudioFocus(focusChangeListener, focusRequest)
@@ -176,22 +186,24 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
      */
     private fun mediaPause() {
         try {
-            if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                abandonAudioFocus(focusChangeListener, focusRequest)
-            }
-            statePaused = if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                mediaPlayer?.pause()
-                true
-            } else {
-                if (statePaused) {
-                    mediaPlayer?.start()
-                    if (stateMuted) {
-                        performMute()
-                    } else {
-                        performUnmute()
-                    }
+            mediaPlayer?.let { mp ->
+                if (mp.isPlaying) {
+                    abandonAudioFocus(focusChangeListener, focusRequest)
                 }
-                false
+                statePaused = if (mp.isPlaying) {
+                    mp.pause()
+                    true
+                } else {
+                    if (statePaused) {
+                        mp.start()
+                        if (stateMuted) {
+                            performMute()
+                        } else {
+                            performUnmute()
+                        }
+                    }
+                    false
+                }
             }
             //If the media player tries to pause/resume after completion without getting reset.
         } catch (err: IllegalStateException) {
@@ -212,24 +224,27 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
             mediaPlayer = MediaPlayer()
         }
         try {
-            appContext.assets.openFd(mediaSource).use({ assetFileDescriptor ->
+            appContext.assets.openFd(mediaSource).use { assetFileDescriptor ->
 
-                mediaPlayer?.setOnPreparedListener(mediaPlaybackService)
-                mediaPlayer?.setOnErrorListener(mediaPlaybackService)
-                mediaPlayer?.setOnCompletionListener(mediaPlaybackService)
-                if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
-                    mediaPlayer?.stop()
+                mediaPlayer?.let { mp ->
+                    if (mp.isPlaying) {
+                        mp.stop()
+                    }
+                    mp.setOnPreparedListener(mediaPlaybackService)
+                    mp.setOnErrorListener(mediaPlaybackService)
+                    mp.setOnCompletionListener(mediaPlaybackService)
+
+                    mp.reset()
+                    mp.setDataSource(assetFileDescriptor.fileDescriptor,
+                            assetFileDescriptor.startOffset,
+                            assetFileDescriptor.length)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        mp.setAudioAttributes(getAudioAttributes())
+                    } else {
+                        mp.setAudioStreamType(AudioManager.STREAM_MUSIC)
+                    }
                 }
-                mediaPlayer?.reset()
-                mediaPlayer?.setDataSource(assetFileDescriptor.fileDescriptor,
-                        assetFileDescriptor.startOffset,
-                        assetFileDescriptor.length)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    mediaPlayer?.setAudioAttributes(getAudioAttributes())
-                } else {
-                    mediaPlayer?.setAudioStreamType(AudioManager.STREAM_MUSIC)
-                }
-            })
+            }
         } catch (e: IOException) {
             Log.e(TAG, e.message, e)
         }
@@ -272,7 +287,7 @@ class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
         private val TAG = MediaPlayerObserver::class.java.simpleName
 
-        private const val AUDIO_VOL_LOSS_LEVEL = 0.2
+        private const val AUDIO_VOL_LOSS_LEVEL = 0.4F
 
         private var statePaused: Boolean = false
     }
