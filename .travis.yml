@@ -19,3 +19,6 @@ before_script:
 
 script:
  - "./gradlew clean assembleDebug jacocoTestReport -PdisablePreDex"
+
+after_script:
+- "java -jar ./codacy-coverage-reporter-4.0.5-assembly.jar report -l Kotlin -r ./rxPreston/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
