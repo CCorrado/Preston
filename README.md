@@ -3,6 +3,7 @@ Preston is a helpful wrapper around Android's MediaPlayer using RxJava.
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fbf616092167410e95612c6f831f76e4)](https://www.codacy.com/app/CCorrado/Preston?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=CCorrado/Preston&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.org/CCorrado/Preston.svg?branch=master)](https://travis-ci.org/CCorrado/Preston)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/fbf616092167410e95612c6f831f76e4)](https://www.codacy.com/app/CCorrado/Preston?utm_source=github.com&utm_medium=referral&utm_content=CCorrado/Preston&utm_campaign=Badge_Coverage)
 
 ### Why Preston?
 Android's Media Player is a pain point for a lot of Android Developers. There is a lot to consider. The state diagram of Media Player is tough to follow and hard to handle gracefully. https://developer.android.com/reference/android/media/MediaPlayer.html
