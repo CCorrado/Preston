@@ -1,15 +1,18 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
 apply from: './jacoco.gradle'
+apply from: './maven.gradle'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion rootProject.ext.targetSdk
 
     defaultConfig {
-        minSdkVersion 17
-        targetSdkVersion 28
-        versionCode 3
-        versionName "1.1.0"
+        minSdkVersion rootProject.ext.minSdk
+        targetSdkVersion rootProject.ext.targetSdk
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -33,7 +36,6 @@ android {
             includeAndroidResources = true
         }
     }
-
 }
 
 dependencies {
@@ -42,11 +44,18 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "com.android.support:appcompat-v7:${appCompatVersion}"
+    implementation "androidx.appcompat:appcompat:1.0.2"
+
     //RxJava
     implementation "io.reactivex.rxjava2:rxandroid:$rxAndroid_version"
     implementation "io.reactivex.rxjava2:rxjava:$rxJava_version"
 }
-repositories {
-    mavenCentral()
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+artifacts {
+    archives sourcesJar
 }

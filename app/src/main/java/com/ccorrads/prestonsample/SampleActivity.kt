@@ -1,8 +1,8 @@
 package com.ccorrads.prestonsample
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.ccorrads.prestonsample.mediacards.MediaItem
 import com.ccorrads.prestonsample.mediacards.SampleRVAdapter
 import kotlinx.android.synthetic.main.activity_sample.*
