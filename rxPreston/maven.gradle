@@ -1,0 +1,89 @@
+ext {
+    bintrayRepo = 'ccorrads'
+    bintrayName = 'preston'
+
+    publishedGroupId = 'com.ccorrads'
+    libraryName = 'preston'
+    artifact = 'rxPreston'
+
+    libraryDescription = 'Preston is a helpful wrapper around Android\'s MediaPlayer using RxJava.'
+
+    siteUrl = 'https://github.com/CCorrado/Preston'
+    gitUrl = 'https://github.com/CCorrado/Preston.git'
+
+    libraryVersion = rootProject.ext.versionName
+
+    developerId = 'ccorrado'
+    developerName = 'Chris Corrado'
+    developerEmail = 'ccorrads@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
+bintray {
+    def ENV = System.getenv()
+    Properties properties = new Properties()
+    try {
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    } catch (err) {
+        //no-op
+    }
+
+    user = ENV["BINTRAY_USER"] ?: properties.getProperty("bintray.user")
+    key = ENV["BINTRAY_KEY"] ?: properties.getProperty("bintray.apikey")
+
+    configurations = ['archives']
+    pkg {
+        repo = bintrayRepo
+        name = bintrayName
+        desc = libraryDescription
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = allLicenses
+        dryRun = false
+        publish = true
+        override = false
+        publicDownloadNumbers = true
+        version {
+            desc = libraryDescription
+        }
+    }
+}
+
+group = publishedGroupId
+version = libraryVersion
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            packaging 'aar'
+            groupId publishedGroupId
+            artifactId artifact
+
+            name libraryName
+            description libraryDescription
+            url siteUrl
+
+            licenses {
+                license {
+                    name licenseName
+                    url licenseUrl
+                }
+            }
+            developers {
+                developer {
+                    id developerId
+                    name developerName
+                    email developerEmail
+                }
+            }
+            scm {
+                connection gitUrl
+                developerConnection gitUrl
+                url siteUrl
+            }
+        }
+    }
+}

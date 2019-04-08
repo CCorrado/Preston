@@ -2,7 +2,7 @@ package com.ccorrads.preston.media
 
 import android.content.Context
 import android.media.MediaPlayer
-import android.support.annotation.VisibleForTesting
+import androidx.annotation.VisibleForTesting
 import com.ccorrads.preston.models.MediaPlayerState
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter

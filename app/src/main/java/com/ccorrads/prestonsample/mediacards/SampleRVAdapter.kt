@@ -1,9 +1,9 @@
 package com.ccorrads.prestonsample.mediacards
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.ccorrads.preston.media.MediaPlaybackService
 import com.ccorrads.preston.media.MediaPlayerObserver
 import com.ccorrads.prestonsample.R

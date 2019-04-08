@@ -10,9 +10,9 @@ import android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
 import android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
 import android.media.MediaPlayer
 import android.os.Build
-import android.support.annotation.VisibleForTesting
 import android.text.TextUtils
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import com.ccorrads.preston.models.MediaPlayerState
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
@@ -22,7 +22,7 @@ import java.io.Serializable
 /**
  * Observer to subscribe to when needing to play a media file.
  */
-class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
+open class MediaPlayerObserver : Observer<MediaPlayerState>, Serializable {
 
     @Transient
     @VisibleForTesting
